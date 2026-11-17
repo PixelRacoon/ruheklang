@@ -188,6 +188,7 @@
   </main>
 </div>
 <audio id="audio" loop preload="none" playsinline></audio>
+<script src="./seamless-player.js"></script>
 <script>
 (() => {
   'use strict';
@@ -223,6 +224,8 @@
   volume.value=String(savedVolume);
   let playing=false, hasStarted=false, timerRemaining=Number(timerSelect.value)*60000, deadline=0, tickHandle=null;
   let toastTimeout=0;
+  const seamless=new window.RuheklangSeamlessPlayer();
+  let usingFallback=false,starting=false,startToken=0;
 
   function showMessage(message,isError=false){
     toast.textContent=message; toast.classList.toggle('error',isError);
@@ -259,20 +262,28 @@
     $('progress').style.width=(100*(1-timerRemaining/total)).toFixed(3)+'%';
     $('timerHint').textContent='Der Klang stoppt nach Ablauf automatisch.';
     if(playing){
-      if(!isIOS) {
+      if(usingFallback && !isIOS){
         const fade=timerRemaining<15000?Math.max(0,timerRemaining/15000):1;
         audio.volume=(Number(volume.value)/100)*fade;
       }
       if(timerRemaining<=0)stop(true);
     }
   }
-  function resetTimer(){timerRemaining=durationMs();if(playing)deadline=Date.now()+timerRemaining;updateClock();}
+  function resetTimer(){
+    timerRemaining=durationMs();
+    if(playing){
+      deadline=Date.now()+timerRemaining;
+      if(!usingFallback)seamless.setVolume(isIOS?1:Number(volume.value)/100,timerRemaining);
+    }
+    updateClock();
+  }
   function refreshButtons(){
     document.body.classList.toggle('playing',playing);
     playIcon.innerHTML=playing?pauseSvg:playSvg;
-    playText.textContent=playing?'Pausieren':'Abspielen';
+    playText.textContent=starting?'Lädt …':playing?'Pausieren':'Abspielen';
+    playBtn.disabled=starting;
     playBtn.setAttribute('aria-label',playing?'Geräusch pausieren':'Geräusch abspielen');
-    stopBtn.disabled=!hasStarted;
+    stopBtn.disabled=!hasStarted&&!starting;
     updateMediaSession();
   }
   function applyVolume(){
@@ -280,39 +291,88 @@
     volumeOutput.textContent=v+' %';
     volume.style.setProperty('--value',v+'%');
     storage.set('ruheklang.volume',v);
-    if(!isIOS){const fade=durationMs()&&playing&&timerRemaining<15000?Math.max(0,timerRemaining/15000):1;audio.volume=(v/100)*fade;}
+    if(!isIOS){
+      const fade=durationMs()&&playing&&timerRemaining<15000?Math.max(0,timerRemaining/15000):1;
+      audio.volume=(v/100)*fade;
+      if(playing&&!usingFallback)seamless.setVolume(v/100,timerRemaining);
+    }
   }
   function loadSound(){
-    audio.pause(); audio.src=audioUrl(soundSelect.value); audio.load();
-    audio.loop=true;
+    seamless.changeSound();
+    audio.pause();
+    audio.src=audioUrl(soundSelect.value);
+    audio.load();
+    audio.loop=true; // only the compatibility fallback uses HTMLAudio
     if(!isIOS)audio.volume=Number(volume.value)/100;
   }
   async function start(){
-    if(playing)return;
+    if(playing||starting)return;
     if(!audio.src)loadSound();
     if(durationMs()&&timerRemaining<=0)timerRemaining=durationMs();
+    const token=++startToken;
+    starting=true;
+    refreshButtons();
     try {
-      // Direct user interaction is required for audio on mobile browsers.
-      await audio.play();
-      playing=true;hasStarted=true;
+      usingFallback=!window.RuheklangSeamlessPlayer.supported;
+      if(!usingFallback){
+        try {
+          const started=await seamless.play(soundSelect.value,isIOS?1:Number(volume.value)/100,timerRemaining);
+          if(!started||token!==startToken)return;
+        }catch(error){
+          if(token!==startToken)return;
+          seamless.stop();
+          usingFallback=true;
+          showMessage('Nahtloser Audiomodus nicht verfügbar – Standardplayer wird verwendet.',true);
+        }
+      }
+      if(usingFallback){
+        if(token!==startToken)return;
+        await audio.play();
+      }
+      if(token!==startToken){
+        if(usingFallback)audio.pause();
+        else seamless.stop();
+        return;
+      }
+      playing=true;
+      hasStarted=true;
       if(durationMs())deadline=Date.now()+timerRemaining;
-      refreshButtons();updateClock();
+      updateClock();
     }catch(error){
-      playing=false;refreshButtons();
-      showMessage('Der Browser hat die Wiedergabe blockiert. Bitte erneut auf Abspielen tippen.',true);
+      if(token!==startToken)return;
+      playing=false;
+      showMessage('Wiedergabe nicht möglich. Bitte erneut auf Abspielen tippen.',true);
+    }finally{
+      if(token===startToken){
+        starting=false;
+        refreshButtons();
+      }
     }
   }
   function pause(){
-    if(!playing)return;
-    if(durationMs())timerRemaining=Math.max(0,deadline-Date.now());
-    audio.pause();playing=false;refreshButtons();updateClock();
+    if(!playing&&!starting)return;
+    ++startToken;
+    starting=false;
+    if(playing&&durationMs())timerRemaining=Math.max(0,deadline-Date.now());
+    seamless.pause();
+    audio.pause();
+    playing=false;
+    refreshButtons();
+    updateClock();
   }
   function stop(finished=false){
-    audio.pause();playing=false;hasStarted=false;
+    ++startToken;
+    starting=false;
+    seamless.stop();
+    audio.pause();
+    playing=false;
+    hasStarted=false;
     try{audio.currentTime=0;}catch(e){}
-    timerRemaining=durationMs();deadline=0;
+    timerRemaining=durationMs();
+    deadline=0;
     if(!isIOS)audio.volume=Number(volume.value)/100;
-    refreshButtons();updateClock();
+    refreshButtons();
+    updateClock();
     if(finished)showMessage('Dein Timer ist abgelaufen. Gute Nacht. 🌙');
   }
   function bindMediaSession(){
@@ -324,9 +384,10 @@
   playBtn.addEventListener('click',()=>{playing?pause():start();});
   stopBtn.addEventListener('click',()=>stop());
   soundSelect.addEventListener('change',()=>{
-    const wasPlaying=playing;
+    const wasPlaying=playing||starting;
     if(wasPlaying)pause();
-    updateSound();loadSound();
+    updateSound();
+    loadSound();
     if(wasPlaying)start();
   });
   timerSelect.addEventListener('change',()=>{
@@ -335,11 +396,11 @@
     if(playing)showMessage('Der Einschlaf-Timer wurde neu gestartet.');
   });
   volume.addEventListener('input',applyVolume);
-  audio.addEventListener('timeupdate',()=>{if(playing)updateClock();});
+  audio.addEventListener('timeupdate',()=>{if(playing&&usingFallback)updateClock();});
   audio.addEventListener('error',()=>{
-    if(!audio.src)return;
-    showMessage('Die Klangdatei fehlt. Bitte die App vollständig entpacken oder neu öffnen.',true);
-    if(playing){pause();}
+    if(!audio.src||!usingFallback)return;
+    showMessage('Die Klangdatei fehlt. Bitte die App neu öffnen.',true);
+    if(playing)pause();
   });
   audio.addEventListener('pause',()=>{if(playing && audio.ended){stop(true);}});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateClock();});
