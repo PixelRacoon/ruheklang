@@ -49,5 +49,7 @@ jobs:
           git add assets/*.mp3 icons/*.png
           if ! git diff --cached --quiet; then
             git commit -m "Add original offline audio and generated app icons"
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           fi
