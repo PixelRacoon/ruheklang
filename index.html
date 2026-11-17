@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Ruheklang: Naturgeräusche und Rauschen ohne Konto, Werbung oder Tracking. Mit Einschlaf-Timer. Offline nutzbar." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ruheklang" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <title>Ruheklang – Einfach abschalten.</title>
+  <style>
+    :root { color-scheme: dark; --accent: #A9DFCA; --accent-rgb:169,223,202; --ink:#f5f8fb; --muted:#aab5c4; --line:rgba(255,255,255,.11); }
+    * { box-sizing:border-box; }
+    html { min-height:100%; background:#101827; }
+    body { margin:0; min-height:100vh; min-height:100dvh; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; }
+    body::before { content:""; position:fixed; inset:0; z-index:-2; pointer-events:none; background: radial-gradient(ellipse 75% 50% at 50% 8%,rgba(var(--accent-rgb),.16),transparent 80%), radial-gradient(ellipse 70% 58% at 99% 83%, rgba(101,104,169,.14),transparent 80%), linear-gradient(160deg,#111b29,#0b1321 68%,#101524); transition: background 1s ease; }
+    body::after {content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.22;background-image:radial-gradient(rgba(255,255,255,.35) .5px, transparent .5px);background-size:6px 6px;mask-image:linear-gradient(to bottom,transparent,#000 60%,transparent);}
+    body[data-scene="sea"] { --accent:#8bbfe6; --accent-rgb:139,191,230; }
+    body[data-scene="wind"] { --accent:#b2d8b3; --accent-rgb:178,216,179; }
+    body[data-scene="forest"] { --accent:#a7d5a4; --accent-rgb:167,213,164; }
+    body[data-scene="fire"] { --accent:#ffd29d; --accent-rgb:255,210,157; }
+    body[data-scene="night"] { --accent:#c7b7f1; --accent-rgb:199,183,241; }
+    body[data-scene="thunder"] { --accent:#b6bef6; --accent-rgb:182,190,246; }
+    body[data-scene="brown"], body[data-scene="pink"],body[data-scene="white"],body[data-scene="fan"] { --accent:#b6cfeb; --accent-rgb:182,207,235; }
+    a {color:inherit}
+    button, select, input { font:inherit; }
+    button {cursor:pointer; -webkit-tap-highlight-color:transparent;}
+    select {-webkit-tap-highlight-color:transparent;}
+    button:focus-visible, select:focus-visible, input:focus-visible {outline:2px solid var(--accent);outline-offset:4px;}
+    .wrap {width:min(100% - 44px, 960px);margin:0 auto;padding-bottom: max(30px,env(safe-area-inset-bottom));}
+    header {display:flex;align-items:center;justify-content:space-between;padding:28px 0 15px;gap:10px;}
+    .brand {display:flex;align-items:center;gap:12px;min-width:0;}
+    .brand-icon {width:40px;height:40px;border:1px solid rgba(var(--accent-rgb),.38);background:linear-gradient(160deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.025));border-radius:14px;display:grid;place-items:center;flex-shrink:0;}
+    .brand-name {font-size:16px;font-weight:750;letter-spacing:.025em;line-height:1.2;}
+    .brand-caption {font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.01em;}
+    .privacy {display:flex;gap:7px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:9px 13px;color:#c0ccd9;font-size:11px;font-weight:650;letter-spacing:.1em;white-space:nowrap;}
+    .privacy svg {color:var(--accent)}
+    .hero {text-align:center;margin:34px 0 24px;}
+    .eyebrow {display:block;color:var(--accent);font-size:10px;letter-spacing:.26em;font-weight:750;text-transform:uppercase;margin-bottom:13px;}
+    h1 {font-size:clamp(32px,6.3vw,52px);letter-spacing:-.052em;line-height:1.1;font-weight:700;margin:0;}
+    h1 em {color:var(--accent);font-style:normal;}
+    .intro {font-size:14px;color:var(--muted);margin:15px auto 0;line-height:1.7;max-width:510px;}
+    .player {border:1px solid rgba(255,255,255,.12);background:linear-gradient(155deg,rgba(36,46,65,.87),rgba(18,26,41,.93));border-radius:29px;width:min(100%,510px);margin:0 auto;padding:29px 29px 22px;box-shadow:0 24px 90px rgba(2,7,18,.35),inset 0 1px 0 rgba(255,255,255,.045);backdrop-filter:blur(10px);}
+    .field {position:relative;}
+    .field-heading {display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;gap:8px;}
+    .field-label {display:block;text-transform:uppercase;font-size:10px;font-weight:750;letter-spacing:.16em;color:#9eafc1;}
+    .field-suffix {font-size:11px;color:var(--muted);}
+    .select-holder {position:relative;}
+    select {appearance:none;-webkit-appearance:none;color:var(--ink);background:rgba(8,15,27,.48);border:1px solid rgba(255,255,255,.145);border-radius:15px;width:100%;padding:16px 47px 16px 17px;min-height:55px;letter-spacing:.01em;font-size:15px;font-weight:650;outline:none;cursor:pointer;}
+    select:hover {border-color:rgba(var(--accent-rgb),.45)}
+    select option {background:#172238;color:white;}
+    .chevron {position:absolute;right:17px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--accent);}
+    .visual {height:236px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;isolation:isolate;}
+    .halo {width:202px;height:202px;border-radius:50%;background:radial-gradient(circle,rgba(var(--accent-rgb),.11) 0 42%,transparent 67%);position:absolute;filter:blur(16px);}
+    .ring {position:absolute;border:1px solid rgba(var(--accent-rgb),.13);border-radius:50%;width:190px;height:190px;transition:border-color .4s ease;}
+    .ring.r2 {width:230px;height:230px;border-color:rgba(var(--accent-rgb),.07);}
+    .ring.r3 {width:155px;height:155px;border-color:rgba(var(--accent-rgb),.2);}
+    body.playing .ring.r1 {animation:breathe 6s ease-in-out infinite;}
+    body.playing .ring.r2 {animation:breathe 6s ease-in-out 1s infinite;}
+    body.playing .ring.r3 {animation:breathe 6s ease-in-out .4s infinite;}
+    @keyframes breathe {0%,100% {transform:scale(.96);opacity:.45} 50% {transform:scale(1.09);opacity:1}}
+    .orb {position:relative;display:grid;place-items:center;width:126px;height:126px;border-radius:50%;background:radial-gradient(circle at 29% 23%,rgba(255,255,255,.18),transparent 50%),linear-gradient(145deg,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),.055));border:1px solid rgba(var(--accent-rgb),.4);box-shadow:0 0 60px rgba(var(--accent-rgb),.08),inset 0 -7px 20px rgba(0,0,0,.12);}
+    .waveform {display:flex;align-items:center;justify-content:center;gap:5px;height:49px;}
+    .waveform span {width:5px;height:12px;border-radius:10px;background:var(--accent);opacity:.95;transform-origin:center;transition:height .35s ease;}
+    .waveform span:nth-child(2),.waveform span:nth-child(8) {height:19px;}
+    .waveform span:nth-child(3),.waveform span:nth-child(7) {height:28px;}
+    .waveform span:nth-child(4),.waveform span:nth-child(6) {height:37px;}
+    .waveform span:nth-child(5) {height:44px;}
+    body.playing .waveform span {animation:wave 1.25s ease-in-out infinite alternate;}
+    body.playing .waveform span:nth-child(2n) {animation-delay:-.85s;animation-duration:1.05s;}
+    body.playing .waveform span:nth-child(3n) {animation-delay:-.32s;animation-duration:1.5s;}
+    @keyframes wave {from{transform:scaleY(.4)} to{transform:scaleY(1.12)}}
+    .sound-details {text-align:center;margin:-4px 0 24px;}
+    .sound-details h2 {font-size:20px;letter-spacing:-.025em;font-weight:700;margin:0 0 7px;}
+    .sound-details p {font-size:12px;color:var(--muted);margin:0;line-height:1.5;}
+    .transport {display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:27px;}
+    .play {display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#122129;border:0;border-radius:999px;min-width:174px;padding:15px 24px;min-height:55px;box-shadow:0 9px 35px rgba(var(--accent-rgb),.15);font-size:15px;font-weight:800;transition:transform .2s ease, box-shadow .2s ease;}
+    .play:hover {transform:translateY(-2px);box-shadow:0 11px 36px rgba(var(--accent-rgb),.25)}
+    .play:active {transform:translateY(0)}
+    .play svg {width:20px;height:20px;}
+    .stop {background:transparent;border:1px solid rgba(255,255,255,.16);color:#c8d1dc;border-radius:50%;width:51px;height:51px;display:grid;place-items:center;}
+    .stop:disabled{opacity:.32;cursor:not-allowed}
+    .stop svg {width:17px;height:17px;}
+    .section-sep {height:1px;background:var(--line);margin:0 0 22px;}
+    .timer-head {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;}
+    .timer-remaining {font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.035em;color:var(--accent);}
+    .timer-progress {height:4px;border-radius:10px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:13px;}
+    .timer-progress > div {height:100%;width:0%;border-radius:10px;background:var(--accent);transition:width .4s linear;}
+    .timer-note {display:flex;align-items:center;gap:8px;margin-top:11px;color:#8898aa;font-size:11px;}
+    .timer-note svg{color:var(--accent);flex-shrink:0;}
+    .volume {margin-top:25px;}
+    .volume-head {display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .volume-output {font-size:12px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;}
+    input[type=range] {width:100%;height:5px;margin:0 0 8px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--value,64%),rgba(255,255,255,.13) var(--value,64%),rgba(255,255,255,.13) 100%);appearance:none;border-radius:999px;cursor:pointer;}
+    input[type=range]::-webkit-slider-thumb {appearance:none;width:18px;height:18px;background:#f5f9fc;border:3px solid var(--accent);border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+    input[type=range]::-moz-range-thumb {width:12px;height:12px;background:#f5f9fc;border:3px solid var(--accent);border-radius:50%;}
+    .ios-volume {display:none;padding:15px 16px;border-radius:13px;background:rgba(var(--accent-rgb),.065);border:1px solid rgba(var(--accent-rgb),.14);font-size:12px;line-height:1.5;color:#b9c7d5;margin-top:19px;}
+    .ios-volume svg {vertical-align:-3px;margin-right:4px;color:var(--accent);}
+    body.ios .volume {display:none;}
+    body.ios .ios-volume {display:block;}
+    .footer {text-align:center;color:#8391a3;font-size:11px;line-height:1.9;margin:22px auto 0;max-width:525px;}
+    .footer strong {color:#b0beca;font-weight:650;}
+    .toast {min-height:19px;max-width:510px;margin:10px auto -11px;text-align:center;color:var(--accent);font-size:12px;font-weight:550;line-height:1.6;}
+    .toast.error {color:#ffc0ad;}
+    .legal-note {display:block;font-size:10px;color:#75859a;margin-top:7px;}
+    @media (max-width:540px) { .wrap{width:min(100% - 32px,520px)} header{padding-top:max(21px,env(safe-area-inset-top));} .hero{margin:31px 0 25px}.hero .intro{margin-top:12px;font-size:13px}.player{padding:23px 21px 21px;border-radius:25px}.visual{height:210px}.ring.r2{width:214px;height:214px}.privacy{padding:9px 10px;font-size:9px}.privacy span{letter-spacing:.055em}.brand-caption{font-size:10px} }
+    @media (max-height:650px) and (min-width:740px) { .hero{margin:8px 0 16px}.hero h1{font-size:34px}.visual{height:175px}header{padding:13px 0 3px}}
+    @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition:none!important}}
+  </style>
+</head>
+<body data-scene="rain">
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"><path d="M3 12h3m3-5v10m4-14v18m4-13v8m4-4h-2" /></svg></div>
+      <div><div class="brand-name">ruheklang<span style="color:var(--accent)">.</span></div><div class="brand-caption">Dein Moment für dich.</div></div>
+    </div>
+    <div class="privacy" title="Keine Werbung, keine Anmeldung, keine Tracking-Daten"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>100 % PRIVAT</span></div>
+  </header>
+  <main>
+    <div class="hero">
+      <span class="eyebrow">Dein kleiner Rückzugsort</span>
+      <h1>Einfach mal <em>abschalten.</em></h1>
+      <p class="intro">Ein Klang, ein ruhiger Moment. Ohne Ablenkung, ohne Abo.</p>
+    </div>
+    <div class="player" aria-label="Ruheklang Audioplayer">
+      <div class="field">
+        <div class="field-heading"><label class="field-label" for="soundSelect">Deine Klangwelt</label><span class="field-suffix">13 Klänge</span></div>
+        <div class="select-holder"><select id="soundSelect" aria-label="Geräusch wählen">
+          <option value="rain">🌧️ Sanfter Regen</option>
+          <option value="hardrain">🌧️ Starker Regen</option>
+          <option value="thunder">⛈️ Regen &amp; Gewitter</option>
+          <option value="sea">🌊 Meereswellen</option>
+          <option value="stream">💧 Plätschernder Bach</option>
+          <option value="wind">🍃 Sanfter Wind</option>
+          <option value="forest">🌲 Wald &amp; Vögel</option>
+          <option value="fire">🔥 Kaminfeuer</option>
+          <option value="night">🌙 Sommernacht</option>
+          <option value="brown">🟤 Braunes Rauschen</option>
+          <option value="pink">🌸 Rosa Rauschen</option>
+          <option value="white">⚪ Weißes Rauschen</option>
+          <option value="fan">🌀 Ventilator</option>
+        </select><svg class="chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m6 9 6 6 6-6" /></svg></div>
+      </div>
+      <div class="visual" aria-hidden="true">
+        <div class="halo"></div><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="orb"><div class="waveform"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
+      </div>
+      <div class="sound-details"><h2 id="soundTitle">Sanfter Regen</h2><p id="soundDescription">Feine Tropfen und ein gleichmäßiges Prasseln.</p></div>
+      <div class="transport">
+        <button class="play" id="playBtn" type="button" aria-label="Geräusch abspielen">
+          <svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M8.2 5.2a1 1 0 0 1 1.48-.86l10.1 6.8a1 1 0 0 1 0 1.72l-10.1 6.8a1 1 0 0 1-1.48-.86V5.2Z"/></svg>
+          <span id="playText">Abspielen</span>
+        </button>
+        <button class="stop" id="stopBtn" type="button" title="Stoppen und Timer zurücksetzen" aria-label="Wiedergabe stoppen" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+      </div>
+      <div class="section-sep"></div>
+      <section class="field" aria-label="Einschlaf-Timer">
+        <div class="timer-head"><label class="field-label" for="timerSelect">Einschlaf-Timer</label><span class="timer-remaining" id="timeRemaining">30:00</span></div>
+        <div class="select-holder"><select id="timerSelect">
+          <option value="0">∞ Ohne Timer</option>
+          <option value="5">5 Minuten</option>
+          <option value="10">10 Minuten</option>
+          <option value="15">15 Minuten</option>
+          <option value="20">20 Minuten</option>
+          <option value="30" selected>30 Minuten</option>
+          <option value="45">45 Minuten</option>
+          <option value="60">1 Stunde</option>
+          <option value="90">1,5 Stunden</option>
+          <option value="120">2 Stunden</option>
+        </select><svg class="chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m6 9 6 6 6-6" /></svg></div>
+        <div class="timer-progress" aria-hidden="true"><div id="progress"></div></div>
+        <div class="timer-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="timerHint">Der Klang stoppt nach Ablauf automatisch.</span></div>
+      </section>
+      <section class="volume" aria-label="Lautstärke">
+        <div class="volume-head"><label class="field-label" for="volume">Lautstärke</label><output class="volume-output" id="volumeOutput">65 %</output></div>
+        <input id="volume" type="range" min="0" max="100" step="1" value="65" aria-label="Lautstärke einstellen" style="--value:65%" />
+      </section>
+      <div class="ios-volume"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 9a5 5 0 0 1 0 6"/></svg> Lautstärke auf dem iPhone über die Seitentasten einstellen.</div>
+    </div>
+    <div class="toast" id="toast" aria-live="polite" role="status"></div>
+    <div class="footer"><strong>Keine Werbung. Kein Konto. Kein Tracking.</strong><br />Alle Geräusche sind lokal gespeichert und funktionieren nach Installation offline.<span class="legal-note">Hinweis: Auf iPhones kann iOS die Wiedergabe oder den Timer im Hintergrund einschränken.</span></div>
+  </main>
+</div>
+<audio id="audio" loop preload="none" playsinline></audio>
+<script>
+(() => {
+  'use strict';
+  const sounds = {
+    rain: ['Sanfter Regen','Feine Tropfen und ein gleichmäßiges Prasseln.'],
+    hardrain: ['Starker Regen','Kräftiges Prasseln für einen freien Kopf.'],
+    thunder: ['Regen & Gewitter','Sanfter Regen und entferntes Donnergrollen.'],
+    sea: ['Meereswellen','Wellen rollen an und ziehen sich wieder zurück.'],
+    stream: ['Plätschernder Bach','Lebendiges Wasser, das stetig weiterfließt.'],
+    wind: ['Sanfter Wind','Leises Rauschen und vorbeiziehende Böen.'],
+    forest: ['Wald & Vögel','Blätterrauschen und einzelne Vogelrufe.'],
+    fire: ['Kaminfeuer','Warmes Knistern an einem ruhigen Abend.'],
+    night: ['Sommernacht','Grillen zirpen in der lauen Abendluft.'],
+    brown: ['Braunes Rauschen','Tiefes, weiches Rauschen ohne helle Spitzen.'],
+    pink: ['Rosa Rauschen','Ausgewogen und angenehm zurückhaltend.'],
+    white: ['Weißes Rauschen','Gleichmäßiges, helles Breitbandrauschen.'],
+    fan: ['Ventilator','Konstantes, dezentes Summen und Luftzug.']
+  };
+  const $ = (id) => document.getElementById(id);
+  const audio = $('audio'), soundSelect=$('soundSelect'), timerSelect=$('timerSelect'),
+    playBtn=$('playBtn'), playIcon=$('playIcon'), playText=$('playText'), stopBtn=$('stopBtn'),
+    volume=$('volume'), volumeOutput=$('volumeOutput'), toast=$('toast');
+  const playSvg='<path d="M8.2 5.2a1 1 0 0 1 1.48-.86l10.1 6.8a1 1 0 0 1 0 1.72l-10.1 6.8a1 1 0 0 1-1.48-.86V5.2Z"/>';
+  const pauseSvg='<rect x="5.5" y="5" width="4.5" height="14" rx="1"/><rect x="14" y="5" width="4.5" height="14" rx="1"/>';
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(isIOS) document.body.classList.add('ios');
+  const storage = { get(k,def){try{return localStorage.getItem(k)??def}catch{return def}},set(k,v){try{localStorage.setItem(k,String(v))}catch{}} };
+  const savedSound=storage.get('ruheklang.sound','rain');
+  const savedTimer=storage.get('ruheklang.timer','30');
+  const savedVolume=Math.max(0,Math.min(100,(Number.isFinite(parseInt(storage.get('ruheklang.volume','65'),10))?parseInt(storage.get('ruheklang.volume','65'),10):65)));
+  soundSelect.value=sounds[savedSound]?savedSound:'rain';
+  timerSelect.value=[...timerSelect.options].some(o=>o.value===savedTimer)?savedTimer:'30';
+  volume.value=String(savedVolume);
+  let playing=false, hasStarted=false, timerRemaining=Number(timerSelect.value)*60000, deadline=0, tickHandle=null;
+  let toastTimeout=0;
+
+  function showMessage(message,isError=false){
+    toast.textContent=message; toast.classList.toggle('error',isError);
+    clearTimeout(toastTimeout);
+    if(message) toastTimeout=setTimeout(()=>{toast.textContent='';toast.classList.remove('error');},5000);
+  }
+  function audioUrl(id){return './assets/'+id+'.mp3';}
+  function updateMediaSession(){
+    if(!('mediaSession' in navigator))return;
+    try {
+      if('MediaMetadata' in window) navigator.mediaSession.metadata=new MediaMetadata({title:sounds[soundSelect.value][0],artist:'Ruheklang',album:'Dein Ruhemodus',artwork:[{src:'./icons/icon-512.png',sizes:'512x512',type:'image/png'}]});
+      navigator.mediaSession.playbackState=playing?'playing':'paused';
+    }catch(e){}
+  }
+  function updateSound(){
+    const id=soundSelect.value;
+    document.body.dataset.scene=id;
+    $('soundTitle').textContent=sounds[id][0];
+    $('soundDescription').textContent=sounds[id][1];
+    storage.set('ruheklang.sound',id);
+    updateMediaSession();
+  }
+  function durationMs(){return Number(timerSelect.value)*60000;}
+  function formatRemaining(ms){
+    if(ms<=0)return '00:00';
+    const sec=Math.ceil(ms/1000), minutes=Math.floor(sec/60), seconds=sec%60;
+    return (minutes>=60?Math.floor(minutes/60)+':'+String(minutes%60).padStart(2,'0'):String(minutes).padStart(2,'0'))+':'+String(seconds).padStart(2,'0');
+  }
+  function updateClock(){
+    const total=durationMs();
+    if(total===0){$('timeRemaining').textContent='∞';$('progress').style.width='0%';$('timerHint').textContent='Der Klang läuft, bis du ihn stoppst.';return;}
+    if(playing){timerRemaining=Math.max(0,deadline-Date.now());}
+    $('timeRemaining').textContent=formatRemaining(timerRemaining);
+    $('progress').style.width=(100*(1-timerRemaining/total)).toFixed(3)+'%';
+    $('timerHint').textContent='Der Klang stoppt nach Ablauf automatisch.';
+    if(playing){
+      if(!isIOS) {
+        const fade=timerRemaining<15000?Math.max(0,timerRemaining/15000):1;
+        audio.volume=(Number(volume.value)/100)*fade;
+      }
+      if(timerRemaining<=0)stop(true);
+    }
+  }
+  function resetTimer(){timerRemaining=durationMs();if(playing)deadline=Date.now()+timerRemaining;updateClock();}
+  function refreshButtons(){
+    document.body.classList.toggle('playing',playing);
+    playIcon.innerHTML=playing?pauseSvg:playSvg;
+    playText.textContent=playing?'Pausieren':'Abspielen';
+    playBtn.setAttribute('aria-label',playing?'Geräusch pausieren':'Geräusch abspielen');
+    stopBtn.disabled=!hasStarted;
+    updateMediaSession();
+  }
+  function applyVolume(){
+    const v=Number(volume.value);
+    volumeOutput.textContent=v+' %';
+    volume.style.setProperty('--value',v+'%');
+    storage.set('ruheklang.volume',v);
+    if(!isIOS){const fade=durationMs()&&playing&&timerRemaining<15000?Math.max(0,timerRemaining/15000):1;audio.volume=(v/100)*fade;}
+  }
+  function loadSound(){
+    audio.pause(); audio.src=audioUrl(soundSelect.value); audio.load();
+    audio.loop=true;
+    if(!isIOS)audio.volume=Number(volume.value)/100;
+  }
+  async function start(){
+    if(playing)return;
+    if(!audio.src)loadSound();
+    if(durationMs()&&timerRemaining<=0)timerRemaining=durationMs();
+    try {
+      // Direct user interaction is required for audio on mobile browsers.
+      await audio.play();
+      playing=true;hasStarted=true;
+      if(durationMs())deadline=Date.now()+timerRemaining;
+      refreshButtons();updateClock();
+    }catch(error){
+      playing=false;refreshButtons();
+      showMessage('Der Browser hat die Wiedergabe blockiert. Bitte erneut auf Abspielen tippen.',true);
+    }
+  }
+  function pause(){
+    if(!playing)return;
+    if(durationMs())timerRemaining=Math.max(0,deadline-Date.now());
+    audio.pause();playing=false;refreshButtons();updateClock();
+  }
+  function stop(finished=false){
+    audio.pause();playing=false;hasStarted=false;
+    try{audio.currentTime=0;}catch(e){}
+    timerRemaining=durationMs();deadline=0;
+    if(!isIOS)audio.volume=Number(volume.value)/100;
+    refreshButtons();updateClock();
+    if(finished)showMessage('Dein Timer ist abgelaufen. Gute Nacht. 🌙');
+  }
+  function bindMediaSession(){
+    if(!('mediaSession' in navigator))return;
+    for(const [action,handler] of [['play',start],['pause',pause],['stop',()=>stop()],['seekbackward',null],['seekforward',null]]){
+      try{navigator.mediaSession.setActionHandler(action,handler);}catch(e){}
+    }
+  }
+  playBtn.addEventListener('click',()=>{playing?pause():start();});
+  stopBtn.addEventListener('click',()=>stop());
+  soundSelect.addEventListener('change',()=>{
+    const wasPlaying=playing;
+    if(wasPlaying)pause();
+    updateSound();loadSound();
+    if(wasPlaying)start();
+  });
+  timerSelect.addEventListener('change',()=>{
+    storage.set('ruheklang.timer',timerSelect.value);
+    resetTimer();
+    if(playing)showMessage('Der Einschlaf-Timer wurde neu gestartet.');
+  });
+  volume.addEventListener('input',applyVolume);
+  audio.addEventListener('timeupdate',()=>{if(playing)updateClock();});
+  audio.addEventListener('error',()=>{
+    if(!audio.src)return;
+    showMessage('Die Klangdatei fehlt. Bitte die App vollständig entpacken oder neu öffnen.',true);
+    if(playing){pause();}
+  });
+  audio.addEventListener('pause',()=>{if(playing && audio.ended){stop(true);}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateClock();});
+  window.addEventListener('pageshow',updateClock);
+  window.addEventListener('focus',updateClock);
+  window.addEventListener('pagehide',()=>{if(playing&&durationMs())timerRemaining=Math.max(0,deadline-Date.now());});
+  updateSound();loadSound();applyVolume();refreshButtons();updateClock();bindMediaSession();
+  tickHandle=setInterval(()=>{if(playing)updateClock();},500);
+  // Audio files are cached in advance on install. No external requests are made.
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
