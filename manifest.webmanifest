@@ -1,0 +1,17 @@
+{
+  "name": "Ruheklang – Naturgeräusche & Rauschen",
+  "short_name": "Ruheklang",
+  "description": "13 entspannende Klänge, Einschlaf-Timer, keine Werbung und kein Tracking.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101827",
+  "theme_color": "#101827",
+  "lang": "de",
+  "orientation": "any",
+  "icons": [
+    {"src":"./icons/icon-192.png", "sizes":"192x192", "type":"image/png", "purpose":"any maskable"},
+    {"src":"./icons/icon-512.png", "sizes":"512x512", "type":"image/png", "purpose":"any maskable"}
+  ]
+}
