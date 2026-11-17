@@ -1,0 +1,51 @@
+name: Prepare Ruheklang offline files
+on:
+  push:
+    branches: [main]
+    paths:
+      - "generate_audio.py"
+      - "make_icons.py"
+      - ".github/workflows/build-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Check whether assets are already complete
+        id: check
+        shell: bash
+        run: |
+          if test -s assets/rain.mp3 && test -s assets/hardrain.mp3 && test -s assets/thunder.mp3 && test -s assets/sea.mp3 && test -s assets/stream.mp3 && test -s assets/wind.mp3 && test -s assets/forest.mp3 && test -s assets/fire.mp3 && test -s assets/night.mp3 && test -s assets/brown.mp3 && test -s assets/pink.mp3 && test -s assets/white.mp3 && test -s assets/fan.mp3 && test -s icons/icon-180.png && test -s icons/icon-192.png && test -s icons/icon-512.png; then
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.missing == 'true'
+        with:
+          python-version: "3.11"
+      - name: Generate original sounds and app icons
+        if: steps.check.outputs.missing == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check numpy scipy pillow
+          mkdir -p assets icons
+          command -v ffmpeg
+          python generate_audio.py
+          python make_icons.py
+      - name: Commit generated MP3s and icons
+        if: steps.check.outputs.missing == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/*.mp3 icons/*.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Add original offline audio and generated app icons"
+            git push origin HEAD:main
+          fi
