@@ -1,4 +1,4 @@
-/* Ruheklang v1.1 – sample-genauer Audioloop mit weichem Übergang.
+/* Ruheklang v1.2 – sample-genauer Audioloop mit weichem Übergang.
    Keine Bibliotheken, keine Telemetrie und keine Netzwerkdienste außer den eigenen Audiodateien. */
 (() => {
   'use strict';
@@ -15,6 +15,11 @@
       this.generation = 0;
       this.volume = 1;
       this.timerLeft = 0;
+      this.eq = { bass: 3, mid: 0, treble: -6 };
+      this.bassFilter = null;
+      this.midFilter = null;
+      this.trebleFilter = null;
+      this.headroom = null;
     }
     static get supported() {
       return !!(window.AudioContext || window.webkitAudioContext);
@@ -25,7 +30,39 @@
       if (!AudioContextClass) throw new Error('Web Audio nicht verfügbar');
       this.context = new AudioContextClass();
       this.gain = this.context.createGain();
+      this.bassFilter = this.context.createBiquadFilter();
+      this.bassFilter.type = 'lowshelf';
+      this.bassFilter.frequency.value = 180;
+      this.midFilter = this.context.createBiquadFilter();
+      this.midFilter.type = 'peaking';
+      this.midFilter.frequency.value = 950;
+      this.midFilter.Q.value = 0.85;
+      this.trebleFilter = this.context.createBiquadFilter();
+      this.trebleFilter.type = 'highshelf';
+      this.trebleFilter.frequency.value = 2800;
+      this.headroom = this.context.createGain();
+      this.bassFilter.connect(this.midFilter);
+      this.midFilter.connect(this.trebleFilter);
+      this.trebleFilter.connect(this.headroom);
+      this.headroom.connect(this.gain);
       this.gain.connect(this.context.destination);
+      this.setEQ(this.eq);
+    }
+    setEQ(eq) {
+      const clamp = v => Math.max(-12, Math.min(12, Number.isFinite(Number(v)) ? Number(v) : 0));
+      this.eq = { bass: clamp(eq.bass), mid: clamp(eq.mid), treble: clamp(eq.treble) };
+      if (!this.context || !this.bassFilter) return;
+      const now = this.context.currentTime;
+      const change = (param, value) => {
+        param.cancelScheduledValues(now);
+        param.setTargetAtTime(value, now, 0.035);
+      };
+      change(this.bassFilter.gain, this.eq.bass);
+      change(this.midFilter.gain, this.eq.mid);
+      change(this.trebleFilter.gain, this.eq.treble);
+      // Make room for boosted frequencies to reduce distortion and clipping.
+      const peakBoost = Math.max(0, this.eq.bass, this.eq.mid, this.eq.treble);
+      change(this.headroom.gain, Math.pow(10, -peakBoost / 20));
     }
     _makeSeamless(decoded) {
       const channels = Array.from({length: decoded.numberOfChannels}, (_, c) => decoded.getChannelData(c));
@@ -90,7 +127,7 @@
       src.loop = true;
       src.loopStart = 0;
       src.loopEnd = this.buffer.duration;
-      src.connect(this.gain);
+      src.connect(this.bassFilter);
       src.start(0, Math.max(0, Math.min(this.offset, this.buffer.duration - 0.001)));
       this.startedAt = this.context.currentTime - this.offset;
       this.source = src;
