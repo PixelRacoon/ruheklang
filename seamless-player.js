@@ -47,9 +47,9 @@
         // is directly adjacent to the original sample at "last-overlap";
         // after that the first sample starts without any seek or decoder gap.
         for (let i = 0; i < overlap; i++) {
-          const t = i / overlap;
-          const a = Math.sin(t * Math.PI / 2) ** 2;
-          output[i] = input[last - overlap + i] * (1 - a) + input[first + i] * a;
+          const angle = (i / overlap) * Math.PI / 2;
+          // Equal-power fade: avoids a recurring volume dip in random noise.
+          output[i] = input[last - overlap + i] * Math.cos(angle) + input[first + i] * Math.sin(angle);
         }
       }
       return loop;
@@ -121,7 +121,14 @@
       }
       this.playing = false;
       this._stopSource();
-      if (this.context && this.context.state === 'running') this.context.suspend().catch(() => {});
+      const ticket = this.generation;
+      // Defer suspension: a sound switch can resume immediately without racing
+      // against an unfinished suspend() on Safari.
+      queueMicrotask(() => {
+        if (ticket === this.generation && !this.playing && this.context && this.context.state === 'running') {
+          this.context.suspend().catch(() => {});
+        }
+      });
     }
     stop() {
       this.pause();
