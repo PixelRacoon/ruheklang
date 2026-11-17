@@ -93,7 +93,18 @@
     .timer-progress > div {height:100%;width:0%;border-radius:10px;background:var(--accent);transition:width .4s linear;}
     .timer-note {display:flex;align-items:center;gap:8px;margin-top:11px;color:#8898aa;font-size:11px;}
     .timer-note svg{color:var(--accent);flex-shrink:0;}
-    .volume {margin-top:25px;}
+    .equalizer {margin-top:22px;padding-top:23px;border-top:1px solid var(--line);}
+    .eq-heading {display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:11px;}
+    .eq-pill {font-size:10px;color:var(--accent);border:1px solid rgba(var(--accent-rgb),.25);background:rgba(var(--accent-rgb),.06);border-radius:999px;padding:5px 9px;white-space:nowrap;}
+    .eq-description {font-size:12px;line-height:1.5;color:var(--muted);margin:10px 1px 16px;min-height:18px;}
+    .eq-controls {background:rgba(6,12,23,.19);border:1px solid rgba(255,255,255,.055);border-radius:16px;padding:9px 14px 7px;}
+    .eq-control {display:grid;grid-template-columns:57px minmax(0,1fr) 55px;align-items:center;gap:12px;min-height:41px;}
+    .eq-control label {font-size:12px;color:#cbd8e4;font-weight:600;}
+    .eq-control output {text-align:right;font-size:11px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .eq-control input[type=range] {margin:0;height:5px;min-width:0;}
+    .eq-control input[type=range]::-webkit-slider-thumb {width:17px;height:17px;}
+    .eq-hint {font-size:11px;line-height:1.55;color:#8b9aac;margin:11px 1px 0;}
+    .volume {margin-top:23px;}
     .volume-head {display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
     .volume-output {font-size:12px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;}
     input[type=range] {width:100%;height:5px;margin:0 0 8px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--value,64%),rgba(255,255,255,.13) var(--value,64%),rgba(255,255,255,.13) 100%);appearance:none;border-radius:999px;cursor:pointer;}
@@ -177,6 +188,24 @@
         <div class="timer-progress" aria-hidden="true"><div id="progress"></div></div>
         <div class="timer-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="timerHint">Der Klang stoppt nach Ablauf automatisch.</span></div>
       </section>
+      <section class="equalizer" aria-label="Equalizer">
+        <div class="eq-heading"><label class="field-label" for="eqPreset">Klangfarbe · Equalizer</label><span class="eq-pill">3-Band EQ</span></div>
+        <div class="select-holder"><select id="eqPreset" aria-label="Equalizer-Voreinstellung">
+          <option value="warm">🌙 Warm &amp; Tief · Standard</option>
+          <option value="deep">🌑 Extra Tief</option>
+          <option value="soft">🍃 Sanft &amp; Weich</option>
+          <option value="neutral">⚖️ Neutral · Originalklang</option>
+          <option value="clear">✨ Klar &amp; Hell</option>
+          <option value="custom">🎚️ Eigene Einstellung</option>
+        </select><svg class="chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></div>
+        <p class="eq-description" id="eqDescription">Weniger helle Spitzen, angenehm voller Klang.</p>
+        <div class="eq-controls">
+          <div class="eq-control"><label for="eqBass">Bass</label><input id="eqBass" type="range" min="-12" max="12" step="1" value="3" aria-label="Bass einstellen" /><output id="eqBassValue" for="eqBass">+3 dB</output></div>
+          <div class="eq-control"><label for="eqMid">Mitten</label><input id="eqMid" type="range" min="-12" max="12" step="1" value="0" aria-label="Mitten einstellen" /><output id="eqMidValue" for="eqMid">0 dB</output></div>
+          <div class="eq-control"><label for="eqTreble">Höhen</label><input id="eqTreble" type="range" min="-12" max="12" step="1" value="-6" aria-label="Höhen einstellen" /><output id="eqTrebleValue" for="eqTreble">−6 dB</output></div>
+        </div>
+        <p class="eq-hint">Änderungen sind sofort hörbar und bleiben auf diesem Gerät gespeichert.</p>
+      </section>
       <section class="volume" aria-label="Lautstärke">
         <div class="volume-head"><label class="field-label" for="volume">Lautstärke</label><output class="volume-output" id="volumeOutput">65 %</output></div>
         <input id="volume" type="range" min="0" max="100" step="1" value="65" aria-label="Lautstärke einstellen" style="--value:65%" />
@@ -184,7 +213,7 @@
       <div class="ios-volume"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 9a5 5 0 0 1 0 6"/></svg> Lautstärke auf dem iPhone über die Seitentasten einstellen.</div>
     </div>
     <div class="toast" id="toast" aria-live="polite" role="status"></div>
-    <div class="footer"><strong>Keine Werbung. Kein Konto. Kein Tracking.</strong><br />Alle Geräusche sind lokal gespeichert und funktionieren nach Installation offline.<span class="legal-note">Version 1.1 · Nahtlose Audiowiedergabe.</span><span class="legal-note">Hinweis: Auf iPhones kann iOS die Wiedergabe oder den Timer im Hintergrund einschränken.</span></div>
+    <div class="footer"><strong>Keine Werbung. Kein Konto. Kein Tracking.</strong><br />Alle Geräusche sind lokal gespeichert und funktionieren nach Installation offline.<span class="legal-note">Version 1.2 · Klang-Equalizer &amp; nahtlose Wiedergabe.</span><span class="legal-note">Hinweis: Auf iPhones kann iOS die Wiedergabe oder den Timer im Hintergrund einschränken.</span></div>
   </main>
 </div>
 <audio id="audio" loop preload="none" playsinline></audio>
@@ -210,7 +239,9 @@
   const $ = (id) => document.getElementById(id);
   const audio = $('audio'), soundSelect=$('soundSelect'), timerSelect=$('timerSelect'),
     playBtn=$('playBtn'), playIcon=$('playIcon'), playText=$('playText'), stopBtn=$('stopBtn'),
-    volume=$('volume'), volumeOutput=$('volumeOutput'), toast=$('toast');
+    volume=$('volume'), volumeOutput=$('volumeOutput'), toast=$('toast'),
+    eqPreset=$('eqPreset'),eqDescription=$('eqDescription'),eqInputs={bass:$('eqBass'),mid:$('eqMid'),treble:$('eqTreble')},
+    eqOutputs={bass:$('eqBassValue'),mid:$('eqMidValue'),treble:$('eqTrebleValue')};
   const playSvg='<path d="M8.2 5.2a1 1 0 0 1 1.48-.86l10.1 6.8a1 1 0 0 1 0 1.72l-10.1 6.8a1 1 0 0 1-1.48-.86V5.2Z"/>';
   const pauseSvg='<rect x="5.5" y="5" width="4.5" height="14" rx="1"/><rect x="14" y="5" width="4.5" height="14" rx="1"/>';
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -226,6 +257,40 @@
   let toastTimeout=0;
   const seamless=new window.RuheklangSeamlessPlayer();
   let usingFallback=false,starting=false,startToken=0;
+  const EQ_PRESETS={
+    warm:{bass:3,mid:0,treble:-6},
+    deep:{bass:6,mid:-2,treble:-10},
+    soft:{bass:1,mid:-2,treble:-7},
+    neutral:{bass:0,mid:0,treble:0},
+    clear:{bass:-2,mid:1,treble:3}
+  };
+  const EQ_DESCRIPTIONS={
+    warm:'Weniger helle Spitzen, angenehm voller Klang.',
+    deep:'Deutlich dunkler, tiefer und sehr weich – ideal bei schrillem Rauschen.',
+    soft:'Zurückhaltende Höhen und sanfte Mitten.',
+    neutral:'Unveränderter Klang, ohne Klangfärbung.',
+    clear:'Mehr Brillanz und Details.',
+    custom:'Deine persönliche Klangfarbe. Mit den drei Reglern anpassen.'
+  };
+  const clampEQ=v=>Math.max(-12,Math.min(12,Number.isFinite(Number(v))?Math.round(Number(v)):0));
+  function savedCustomEQ(){return Object.fromEntries(Object.keys(eqInputs).map(k=>[k,clampEQ(storage.get('ruheklang.eq.custom.'+k,EQ_PRESETS.warm[k]))]));}
+  function applyEQ(preset,values,saveCustom=false){
+    eqPreset.value=preset;
+    const eq={};
+    for(const key of Object.keys(eqInputs)){
+      const v=clampEQ(values[key]);
+      eq[key]=v;
+      eqInputs[key].value=String(v);
+      eqInputs[key].style.setProperty('--value',((v+12)/24*100).toFixed(2)+'%');
+      eqOutputs[key].textContent=(v>0?'+':v<0?'−':'')+Math.abs(v)+' dB';
+      if(saveCustom)storage.set('ruheklang.eq.custom.'+key,v);
+    }
+    eqDescription.textContent=EQ_DESCRIPTIONS[preset];
+    storage.set('ruheklang.eq.preset',preset);
+    seamless.setEQ(eq);
+  }
+  const initialEQPreset=storage.get('ruheklang.eq.preset','warm');
+  const safeEQPreset=initialEQPreset==='custom'||EQ_PRESETS[initialEQPreset]?initialEQPreset:'warm';
 
   function showMessage(message,isError=false){
     toast.textContent=message; toast.classList.toggle('error',isError);
@@ -322,7 +387,7 @@
           if(token!==startToken)return;
           seamless.stop();
           usingFallback=true;
-          showMessage('Nahtloser Audiomodus nicht verfügbar – Standardplayer wird verwendet.',true);
+          showMessage('Standardplayer aktiv: Equalizer und nahtloser Loop sind hier nicht verfügbar.',true);
         }
       }
       if(usingFallback){
@@ -396,6 +461,16 @@
     if(playing)showMessage('Der Einschlaf-Timer wurde neu gestartet.');
   });
   volume.addEventListener('input',applyVolume);
+  eqPreset.addEventListener('change',()=>{
+    const preset=eqPreset.value;
+    applyEQ(preset,preset==='custom'?savedCustomEQ():EQ_PRESETS[preset]);
+  });
+  for(const input of Object.values(eqInputs)){
+    input.addEventListener('input',()=>{
+      const values=Object.fromEntries(Object.keys(eqInputs).map(key=>[key,clampEQ(eqInputs[key].value)]));
+      applyEQ('custom',values,true);
+    });
+  }
   audio.addEventListener('timeupdate',()=>{if(playing&&usingFallback)updateClock();});
   audio.addEventListener('error',()=>{
     if(!audio.src||!usingFallback)return;
@@ -407,6 +482,7 @@
   window.addEventListener('pageshow',updateClock);
   window.addEventListener('focus',updateClock);
   window.addEventListener('pagehide',()=>{if(playing&&durationMs())timerRemaining=Math.max(0,deadline-Date.now());});
+  applyEQ(safeEQPreset,safeEQPreset==='custom'?savedCustomEQ():EQ_PRESETS[safeEQPreset]);
   updateSound();loadSound();applyVolume();refreshButtons();updateClock();bindMediaSession();
   tickHandle=setInterval(()=>{if(playing)updateClock();},500);
   // Audio files are cached in advance on install. No external requests are made.
