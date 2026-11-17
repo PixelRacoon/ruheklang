@@ -1,4 +1,4 @@
-const VERSION='ruheklang-v1.1.0';
+const VERSION='ruheklang-v1.1.1';
 const FILES=[
   './','./index.html','./seamless-player.js','./manifest.webmanifest','./icons/icon-180.png','./icons/icon-192.png','./icons/icon-512.png',
   './assets/rain.mp3','./assets/hardrain.mp3','./assets/thunder.mp3','./assets/sea.mp3',
